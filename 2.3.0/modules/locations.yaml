@@ -1,0 +1,541 @@
+---
+paths:
+  /locations:
+    get:
+      tags:
+        - Locations
+      summary: Get locations
+      description: |
+        Retrieve a list of locations. Used by eMSP to fetch locations from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 4.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /locations/{location_id}:
+    get:
+      tags:
+        - Locations
+      summary: Get location
+      description: |
+        Retrieve a specific location by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 4.
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Locations
+      summary: Push location
+      description: |
+        Push a location to the receiver. Used by CPO to push locations to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 4.
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    Location:
+      type: object
+      required:
+        - id
+        - name
+        - address
+        - country
+        - coordinates
+        - evses
+        - last_updated
+      properties:
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+          description: "Location identifier. See OCPI Spec 2.3.0 Module 4."
+        publish:
+          type: boolean
+          description: "Publish status. See OCPI Spec 2.3.0 Module 4."
+        name:
+          type: string
+          maxLength: 255
+          description: "Location name. See OCPI Spec 2.3.0 Module 4."
+        address:
+          type: string
+          maxLength: 45
+          description: "Street address. See OCPI Spec 2.3.0 Module 4."
+        city:
+          type: string
+          maxLength: 45
+          description: "City. See OCPI Spec 2.3.0 Module 4."
+        postal_code:
+          type: string
+          maxLength: 10
+          description: "Postal code. See OCPI Spec 2.3.0 Module 4."
+        state:
+          type: string
+          maxLength: 20
+          description: "State or province. See OCPI Spec 2.3.0 Module 4."
+        country:
+          $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        coordinates:
+          $ref: '../../common/definitions.yaml#/components/schemas/GeoLocation'
+        related_locations:
+          type: array
+          items:
+            type: object
+            required:
+              - latitude
+              - longitude
+              - name
+            properties:
+              latitude:
+                type: string
+              longitude:
+                type: string
+              name:
+                type: string
+                maxLength: 255
+            description: "Related location. See OCPI Spec 2.3.0 Module 4."
+          description: "Related locations. See OCPI Spec 2.3.0 Module 4."
+        parking_type:
+          type: string
+          enum:
+            - ALONG_MOTORWAY
+            - PARKING_GARAGE
+            - PARKING_LOT
+            - ON_DRIVEWAY
+            - ON_STREET
+            - UNDERGROUND_GARAGE
+          description: "Parking type. See OCPI Spec 2.3.0 Module 4."
+        evses:
+          type: array
+          items:
+            $ref: '#/components/schemas/EVSE'
+          description: "List of EVSEs. See OCPI Spec 2.3.0 Module 4."
+        directions:
+          type: array
+          items:
+            $ref: '../../common/definitions.yaml#/components/schemas/DisplayText'
+          description: "Directions. See OCPI Spec 2.3.0 Module 4."
+        operator:
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
+        suboperator:
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
+        owner:
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
+        facilities:
+          type: array
+          items:
+            type: string
+            enum:
+              - HOTEL
+              - RESTAURANT
+              - CAFE
+              - MALL
+              - SUPERMARKET
+              - SPORT
+              - RECREATION_AREA
+              - NATURE
+              - MUSEUM
+              - BIKE_SHARING
+              - BUS_STOP
+              - TAXI_STAND
+              - TRAM_STOP
+              - METRO_STATION
+              - TRAIN_STATION
+              - AIRPORT
+              - PARKING_LOT
+              - CARPOOL_PARKING
+              - FUEL_STATION
+              - WIFI
+          description: "Facilities. See OCPI Spec 2.3.0 Module 4."
+        time_zone:
+          type: string
+          maxLength: 255
+          description: "Time zone. See OCPI Spec 2.3.0 Module 4."
+        opening_times:
+          type: object
+          properties:
+            regular_hours:
+              type: array
+              items:
+                $ref: ../../common/definitions.yaml#/components/schemas/RegularHours
+            twenty_four_seven:
+              type: boolean
+            exceptional_openings:
+              type: array
+              items:
+                $ref: ../../common/definitions.yaml#/components/schemas/ExceptionalPeriod
+            exceptional_closings:
+              type: array
+              items:
+                $ref: ../../common/definitions.yaml#/components/schemas/ExceptionalPeriod
+          description: "Opening times. See OCPI Spec 2.3.0 Module 4."
+        charging_when_closed:
+          type: boolean
+          description: "Charging when closed. See OCPI Spec 2.3.0 Module 4."
+        images:
+          type: array
+          items:
+            type: object
+            required:
+              - url
+              - thumbnail
+              - category
+              - type
+              - width
+              - height
+            properties:
+              url:
+                $ref: '../../common/definitions.yaml#/components/schemas/URL'
+              thumbnail:
+                $ref: '../../common/definitions.yaml#/components/schemas/URL'
+              category:
+                type: string
+                enum:
+                  - CHARGER
+                  - ENTRANCE
+                  - LOCATION
+                  - NETWORK
+                  - OPERATOR
+                  - OTHER
+                  - OWNER
+              type:
+                type: string
+                enum:
+                  - gif
+                  - jpeg
+                  - png
+                  - svg
+              width:
+                type: integer
+                minimum: 0
+              height:
+                type: integer
+                minimum: 0
+            description: "Image. See OCPI Spec 2.3.0 Module 4."
+          description: "Images. See OCPI Spec 2.3.0 Module 4."
+        energy_mix:
+          $ref: '../../common/definitions.yaml#/components/schemas/EnergyMix'
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "Location object. See OCPI Spec 2.3.0 Module 4."
+
+    EVSE:
+      type: object
+      required:
+        - uid
+        - evse_id
+        - status
+        - connectors
+        - last_updated
+      properties:
+        uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+          description: "EVSE UID. See OCPI Spec 2.3.0 Module 4."
+        evse_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString48'
+          description: "EVSE identifier. See OCPI Spec 2.3.0 Module 4."
+        status:
+          type: string
+          enum:
+            - AVAILABLE
+            - BLOCKED
+            - CHARGING
+            - INOPERATIVE
+            - OUTOFORDER
+            - PLANNED
+            - REMOVED
+            - RESERVED
+            - UNKNOWN
+            - PAYMENT_TERMINAL
+          description: "EVSE status. See OCPI Spec 2.3.0 Module 4."
+        status_schedule:
+          type: array
+          items:
+            type: object
+            required:
+              - period_begin
+              - period_end
+              - status
+            properties:
+              period_begin:
+                $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+              period_end:
+                $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+              status:
+                type: string
+                enum:
+                  - AVAILABLE
+                  - BLOCKED
+                  - CHARGING
+                  - INOPERATIVE
+                  - OUTOFORDER
+                  - PLANNED
+                  - REMOVED
+                  - RESERVED
+                  - UNKNOWN
+                  - PAYMENT_TERMINAL
+            description: "Status schedule entry. See OCPI Spec 2.3.0 Module 4."
+          description: "Status schedule. See OCPI Spec 2.3.0 Module 4."
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum:
+              - CHARGING_PROFILE_CAPABLE
+              - CREDIT_CARD_PAYABLE
+              - REMOTE_START_STOP_CAPABLE
+              - RESERVABLE
+              - RFID_READER
+              - UNLOCK_CAPABLE
+              - PLUG_AND_CHARGE
+          description: "Capabilities. See OCPI Spec 2.3.0 Module 4."
+        connectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connector'
+          description: "Connectors. See OCPI Spec 2.3.0 Module 4."
+        floor_level:
+          type: string
+          maxLength: 4
+          description: "Floor level. See OCPI Spec 2.3.0 Module 4."
+        coordinates:
+          $ref: '../../common/definitions.yaml#/components/schemas/GeoLocation'
+        physical_reference:
+          type: string
+          maxLength: 16
+          description: "Physical reference. See OCPI Spec 2.3.0 Module 4."
+        directions:
+          type: array
+          items:
+            $ref: '../../common/definitions.yaml#/components/schemas/DisplayText'
+          description: "Directions. See OCPI Spec 2.3.0 Module 4."
+        parking_restrictions:
+          type: array
+          items:
+            type: string
+            enum:
+              - EV_ONLY
+              - PLUGGED
+              - DISABLED
+              - CUSTOMERS
+              - MOTORCYCLES
+          description: "Parking restrictions. See OCPI Spec 2.3.0 Module 4."
+        images:
+          type: array
+          items:
+            type: object
+            required:
+              - url
+              - thumbnail
+              - category
+              - type
+              - width
+              - height
+            properties:
+              url:
+                $ref: '../../common/definitions.yaml#/components/schemas/URL'
+              thumbnail:
+                $ref: '../../common/definitions.yaml#/components/schemas/URL'
+              category:
+                type: string
+                enum:
+                  - CHARGER
+                  - ENTRANCE
+                  - LOCATION
+                  - NETWORK
+                  - OPERATOR
+                  - OTHER
+                  - OWNER
+              type:
+                type: string
+                enum:
+                  - gif
+                  - jpeg
+                  - png
+                  - svg
+              width:
+                type: integer
+                minimum: 0
+              height:
+                type: integer
+                minimum: 0
+            description: "Image. See OCPI Spec 2.3.0 Module 4."
+          description: "Images. See OCPI Spec 2.3.0 Module 4."
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "EVSE object. See OCPI Spec 2.3.0 Module 4."
+
+    Connector:
+      type: object
+      required:
+        - id
+        - standard
+        - format
+        - power_type
+        - voltage
+        - amperage
+        - last_updated
+      properties:
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+          description: "Connector identifier. See OCPI Spec 2.3.0 Module 4."
+        standard:
+          type: string
+          enum:
+            - CHADEMO
+            - CHAOJI
+            - DOMESTIC_A
+            - DOMESTIC_B
+            - DOMESTIC_C
+            - DOMESTIC_D
+            - DOMESTIC_E
+            - DOMESTIC_F
+            - DOMESTIC_G
+            - DOMESTIC_H
+            - DOMESTIC_I
+            - DOMESTIC_J
+            - DOMESTIC_K
+            - DOMESTIC_L
+            - GBT_AC
+            - GBT_DC
+            - IEC_60309_2_single_16
+            - IEC_60309_2_three_16
+            - IEC_60309_2_three_32
+            - IEC_60309_2_three_64
+            - IEC_62196_T1
+            - IEC_62196_T1_COMBO
+            - IEC_62196_T2
+            - IEC_62196_T2_COMBO
+            - IEC_62196_T3A
+            - IEC_62196_T3C
+            - NEMA_5_20
+            - NEMA_6_30
+            - NEMA_6_50
+            - NEMA_10_30
+            - NEMA_10_50
+            - NEMA_14_30
+            - NEMA_14_50
+            - PANTOGRAPH_BOTTOM_UP
+            - PANTOGRAPH_TOP_DOWN
+            - TESLA_R
+            - TESLA_S
+            - TYPE_1
+            - TYPE_2
+            - TYPE_3
+            - UNKNOWN
+          description: "Connector standard. See OCPI Spec 2.3.0 Module 4."
+        format:
+          type: string
+          enum:
+            - SOCKET
+            - CABLE
+          description: "Connector format. See OCPI Spec 2.3.0 Module 4."
+        power_type:
+          type: string
+          enum:
+            - AC_1_PHASE
+            - AC_3_PHASE
+            - DC
+          description: "Power type. See OCPI Spec 2.3.0 Module 4."
+        voltage:
+          type: integer
+          minimum: 0
+          description: "Voltage in Volts. See OCPI Spec 2.3.0 Module 4."
+        amperage:
+          type: integer
+          minimum: 0
+          description: "Amperage in Amperes. See OCPI Spec 2.3.0 Module 4."
+        tariff_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        terms_and_conditions:
+          $ref: '../../common/definitions.yaml#/components/schemas/URL'
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "Connector object. See OCPI Spec 2.3.0 Module 4."

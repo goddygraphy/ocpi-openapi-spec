@@ -1,0 +1,309 @@
+---
+paths:
+  /tariffs:
+    get:
+      tags:
+        - Tariffs
+      summary: Get tariffs
+      description: |
+        Retrieve a list of tariffs. Used by eMSP to fetch tariffs from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 7.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tariff'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /tariffs/{country_code}/{party_id}/{tariff_id}:
+    get:
+      tags:
+        - Tariffs
+      summary: Get tariff
+      description: |
+        Retrieve a specific tariff by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 7.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: tariff_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/Tariff'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Tariffs
+      summary: Push tariff
+      description: |
+        Push a tariff to the receiver. Used by CPO to push tariffs to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 7.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: tariff_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tariff'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    Tariff:
+      type: object
+      required:
+        - country_code
+        - party_id
+        - id
+        - currency
+        - tariff_alt_text
+        - tariff_alt_url
+        - elements
+        - last_updated
+      properties:
+        country_code:
+          $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        party_id:
+          $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        tariff_alt_text:
+          type: array
+          items:
+            $ref: '../../common/definitions.yaml#/components/schemas/DisplayText'
+        tariff_alt_url:
+          $ref: '../../common/definitions.yaml#/components/schemas/URL'
+        min_price:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        max_price:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/TariffElement'
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        end_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        energy_mix:
+          $ref: '../../common/definitions.yaml#/components/schemas/EnergyMix'
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "Tariff object. See OCPI Spec 2.3.0 Module 7."
+
+    TariffElement:
+      type: object
+      required:
+        - price_components
+      properties:
+        price_components:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceComponent'
+          description: "Price components. See OCPI Spec 2.3.0 Module 7."
+        restrictions:
+          $ref: '#/components/schemas/TariffRestrictions'
+      description: "Tariff element. See OCPI Spec 2.3.0 Module 7."
+
+    PriceComponent:
+      type: object
+      required:
+        - type
+        - price
+        - step_size
+      properties:
+        type:
+          type: string
+          enum:
+            - ENERGY
+            - FLAT
+            - PARKING_TIME
+            - TIME
+          description: "Price component type. See OCPI Spec 2.3.0 Module 7."
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: "Price per unit. See OCPI Spec 2.3.0 Module 7."
+        vat:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: "VAT percentage. See OCPI Spec 2.3.0 Module 7."
+        step_size:
+          type: integer
+          minimum: 1
+          description: "Step size. See OCPI Spec 2.3.0 Module 7."
+      description: "Price component. See OCPI Spec 2.3.0 Module 7."
+
+    TariffRestrictions:
+      type: object
+      properties:
+        start_time:
+          type: string
+          pattern: '^[0-9]{2}:[0-9]{2}$'
+          description: "Start time in HH:MM format. See OCPI Spec 2.3.0 Module 7."
+        end_time:
+          type: string
+          pattern: '^[0-9]{2}:[0-9]{2}$'
+          description: "End time in HH:MM format. See OCPI Spec 2.3.0 Module 7."
+        start_date:
+          type: string
+          format: date
+          description: "Start date. See OCPI Spec 2.3.0 Module 7."
+        end_date:
+          type: string
+          format: date
+          description: "End date. See OCPI Spec 2.3.0 Module 7."
+        min_kwh:
+          type: number
+          format: float
+          minimum: 0
+          description: "Minimum kWh. See OCPI Spec 2.3.0 Module 7."
+        max_kwh:
+          type: number
+          format: float
+          minimum: 0
+          description: "Maximum kWh. See OCPI Spec 2.3.0 Module 7."
+        min_current:
+          type: number
+          format: float
+          minimum: 0
+          description: "Minimum current in Amperes. See OCPI Spec 2.3.0 Module 7."
+        max_current:
+          type: number
+          format: float
+          minimum: 0
+          description: "Maximum current in Amperes. See OCPI Spec 2.3.0 Module 7."
+        min_power:
+          type: number
+          format: float
+          minimum: 0
+          description: "Minimum power in kW. See OCPI Spec 2.3.0 Module 7."
+        max_power:
+          type: number
+          format: float
+          minimum: 0
+          description: "Maximum power in kW. See OCPI Spec 2.3.0 Module 7."
+        min_duration:
+          type: integer
+          minimum: 0
+          description: "Minimum duration in seconds. See OCPI Spec 2.3.0 Module 7."
+        max_duration:
+          type: integer
+          minimum: 0
+          description: "Maximum duration in seconds. See OCPI Spec 2.3.0 Module 7."
+        day_of_week:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+          description: |
+            Days of week (1=Monday, 7=Sunday). See OCPI Spec 2.3.0 Module 7.
+        reservation:
+          type: string
+          enum:
+            - RESERVED
+            - RESERVATION_EXPIRED
+            - RESERVATION_CANCELLED
+          description: "Reservation restriction. See OCPI Spec 2.3.0 Module 7."
+      description: "Tariff restrictions. See OCPI Spec 2.3.0 Module 7."

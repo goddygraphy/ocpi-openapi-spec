@@ -1,0 +1,391 @@
+---
+paths:
+  /cdrs:
+    get:
+      tags:
+        - CDRs
+      summary: Get CDRs
+      description: |
+        Retrieve a list of Charge Detail Records.
+        Used by eMSP to fetch CDRs from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 6.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CDR'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /cdrs/{country_code}/{party_id}/{cdr_id}:
+    get:
+      tags:
+        - CDRs
+      summary: Get CDR
+      description: |
+        Retrieve a specific Charge Detail Record by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 6.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: cdr_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/CDR'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - CDRs
+      summary: Push CDR
+      description: |
+        Push a Charge Detail Record to the receiver.
+        Used by CPO to push CDRs to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 6.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: cdr_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CDR'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    CDR:
+      type: object
+      required:
+        - id
+        - start_date_time
+        - end_date_time
+        - auth_id
+        - auth_method
+        - location
+        - currency
+        - tariffs
+        - total_cost
+        - last_updated
+      properties:
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+          description: "CDR identifier. See OCPI Spec 2.3.0 Module 6."
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        end_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        auth_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        auth_method:
+          type: string
+          enum:
+            - AUTH_REQUEST
+            - COMMAND
+            - WHITELIST
+          description: "Authentication method. See OCPI Spec 2.3.0 Module 6."
+        location:
+          $ref: '#/components/schemas/CdrLocation'
+        meter_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString255'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: "ISO 4217 currency code. See OCPI Spec 2.3.0 Module 6."
+        tariffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CdrTariff'
+          description: "Tariffs. See OCPI Spec 2.3.0 Module 6."
+        charging_periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/CdrChargingPeriod'
+          description: "Charging periods. See OCPI Spec 2.3.0 Module 6."
+        total_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        total_fixed_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        total_energy:
+          type: number
+          format: float
+          minimum: 0
+          description: "Total energy in kWh. See OCPI Spec 2.3.0 Module 6."
+        total_energy_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        total_time:
+          type: number
+          format: float
+          minimum: 0
+          description: "Total time in hours. See OCPI Spec 2.3.0 Module 6."
+        total_time_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        total_parking_time:
+          type: number
+          format: float
+          minimum: 0
+          description: "Total parking time in hours. See OCPI Spec 2.3.0 Module 6."
+        total_parking_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        total_reservation_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        remark:
+          type: string
+          maxLength: 255
+          description: "Remark. See OCPI Spec 2.3.0 Module 6."
+        invoice_reference_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString39'
+        credit:
+          type: boolean
+          description: "Credit flag. See OCPI Spec 2.3.0 Module 6."
+        credit_reference_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString39'
+        home_charging_compensation:
+          type: boolean
+          description: "Home charging compensation. See OCPI Spec 2.3.0 Module 6."
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "CDR object. See OCPI Spec 2.3.0 Module 6."
+
+    CdrLocation:
+      type: object
+      required:
+        - id
+        - name
+        - address
+        - country
+        - coordinates
+        - evse_uid
+        - connector_id
+      properties:
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        name:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+          maxLength: 45
+        city:
+          type: string
+          maxLength: 45
+        postal_code:
+          type: string
+          maxLength: 10
+        state:
+          type: string
+          maxLength: 20
+        country:
+          $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        coordinates:
+          $ref: '../../common/definitions.yaml#/components/schemas/GeoLocation'
+        evse_uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_standard:
+          type: string
+          enum:
+            - CHADEMO
+            - CHAOJI
+            - DOMESTIC_A
+            - DOMESTIC_B
+            - DOMESTIC_C
+            - DOMESTIC_D
+            - DOMESTIC_E
+            - DOMESTIC_F
+            - DOMESTIC_G
+            - DOMESTIC_H
+            - DOMESTIC_I
+            - DOMESTIC_J
+            - DOMESTIC_K
+            - DOMESTIC_L
+            - GBT_AC
+            - GBT_DC
+            - IEC_60309_2_single_16
+            - IEC_60309_2_three_16
+            - IEC_60309_2_three_32
+            - IEC_60309_2_three_64
+            - IEC_62196_T1
+            - IEC_62196_T1_COMBO
+            - IEC_62196_T2
+            - IEC_62196_T2_COMBO
+            - IEC_62196_T3A
+            - IEC_62196_T3C
+            - NEMA_5_20
+            - NEMA_6_30
+            - NEMA_6_50
+            - NEMA_10_30
+            - NEMA_10_50
+            - NEMA_14_30
+            - NEMA_14_50
+            - PANTOGRAPH_BOTTOM_UP
+            - PANTOGRAPH_TOP_DOWN
+            - TESLA_R
+            - TESLA_S
+            - TYPE_1
+            - TYPE_2
+            - TYPE_3
+            - UNKNOWN
+        connector_format:
+          type: string
+          enum:
+            - SOCKET
+            - CABLE
+        connector_power_type:
+          type: string
+          enum:
+            - AC_1_PHASE
+            - AC_3_PHASE
+            - DC
+      description: "CDR location. See OCPI Spec 2.3.0 Module 6."
+
+    CdrTariff:
+      type: object
+      required:
+        - country_code
+        - party_id
+        - id
+        - currency
+        - tariff_alt_text
+        - tariff_alt_url
+        - elements
+        - last_updated
+      properties:
+        country_code:
+          $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        party_id:
+          $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        tariff_alt_text:
+          type: array
+          items:
+            $ref: '../../common/definitions.yaml#/components/schemas/DisplayText'
+        tariff_alt_url:
+          $ref: '../../common/definitions.yaml#/components/schemas/URL'
+        min_price:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        max_price:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        elements:
+          type: array
+          items:
+            $ref: '../modules/tariffs.yaml#/components/schemas/TariffElement'
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        end_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "CDR tariff. See OCPI Spec 2.3.0 Module 6."
+
+    CdrChargingPeriod:
+      type: object
+      required:
+        - start_date_time
+        - dimensions
+      properties:
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        dimensions:
+          type: array
+          items:
+            $ref: '../modules/sessions.yaml#/components/schemas/CdrDimension'
+        tariff_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "CDR charging period. See OCPI Spec 2.3.0 Module 6."

@@ -1,0 +1,254 @@
+---
+paths:
+  /sessions:
+    get:
+      tags:
+        - Sessions
+      summary: Get sessions
+      description: |
+        Retrieve a list of charging sessions.
+        Used by eMSP to fetch sessions from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 5.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /sessions/{country_code}/{party_id}/{session_id}:
+    get:
+      tags:
+        - Sessions
+      summary: Get session
+      description: |
+        Retrieve a specific charging session by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 5.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Sessions
+      summary: Push session
+      description: |
+        Push a charging session to the receiver.
+        Used by CPO to push sessions to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 5.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    Session:
+      type: object
+      required:
+        - id
+        - start_date_time
+        - kwh
+        - auth_id
+        - location_id
+        - evse_uid
+        - connector_id
+        - meter_id
+        - currency
+        - total_cost
+        - status
+        - last_updated
+      properties:
+        id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+          description: "Session identifier. See OCPI Spec 2.3.0 Module 5."
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        end_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        kwh:
+          type: number
+          format: float
+          minimum: 0
+          description: "Energy consumed in kWh. See OCPI Spec 2.3.0 Module 5."
+        auth_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        auth_method:
+          type: string
+          enum:
+            - AUTH_REQUEST
+            - COMMAND
+            - WHITELIST
+          description: "Authentication method. See OCPI Spec 2.3.0 Module 5."
+        location_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        evse_uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        meter_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString255'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: "ISO 4217 currency code. See OCPI Spec 2.3.0 Module 5."
+        charging_periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChargingPeriod'
+          description: "Charging periods. See OCPI Spec 2.3.0 Module 5."
+        total_cost:
+          $ref: '../../common/definitions.yaml#/components/schemas/Price'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - COMPLETED
+            - INVALID
+            - PENDING
+          description: "Session status. See OCPI Spec 2.3.0 Module 5."
+        last_updated:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+      description: "Session object. See OCPI Spec 2.3.0 Module 5."
+
+    ChargingPeriod:
+      type: object
+      required:
+        - start_date_time
+        - dimensions
+      properties:
+        start_date_time:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CdrDimension'
+          description: "CDR dimensions. See OCPI Spec 2.3.0 Module 5."
+        tariff_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "Charging period. See OCPI Spec 2.3.0 Module 5."
+
+    CdrDimension:
+      type: object
+      required:
+        - type
+        - volume
+      properties:
+        type:
+          type: string
+          enum:
+            - ENERGY
+            - FLAT
+            - MAX_CURRENT
+            - MIN_CURRENT
+            - PARKING_TIME
+            - TIME
+          description: "Dimension type. See OCPI Spec 2.3.0 Module 5."
+        volume:
+          type: number
+          format: float
+          minimum: 0
+          description: "Volume. See OCPI Spec 2.3.0 Module 5."
+      description: "CDR dimension. See OCPI Spec 2.3.0 Module 5."

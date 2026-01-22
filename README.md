@@ -12,7 +12,7 @@ The official OCPI standard can be downloaded from the [EVRoaming Foundation webs
 
 ## Overview
 
-This repository provides machine-readable OpenAPI specifications for OCPI versions 2.2.1 and (future) 2.3.0. These specifications enable:
+This repository provides machine-readable OpenAPI specifications for OCPI versions 2.2.1 and 2.3.0. These specifications enable:
 
 - **Code Generation**: Generate client and server stubs in any language
 - **API Validation**: Validate requests and responses against the specification
@@ -22,7 +22,7 @@ This repository provides machine-readable OpenAPI specifications for OCPI versio
 ## Supported Versions
 
 - **OCPI 2.2.1** ✅ (Current workhorse of the European industry)
-- **OCPI 2.3.0** 🚧 (Planned - includes AFIR compliance features)
+- **OCPI 2.3.0** ✅ (Includes AFIR compliance, Booking module, and enhanced features)
 
 ## Quick Start
 
@@ -42,7 +42,9 @@ brew install yamllint
 
 ### Using the Specification
 
-The main specification file is located at `2.2.1/ocpi-2.2.1.yaml`.
+The main specification files are located at:
+- `2.2.1/ocpi-2.2.1.yaml` (OCPI 2.2.1)
+- `2.3.0/ocpi-2.3.0.yaml` (OCPI 2.3.0)
 
 #### Generate Code with OpenAPI Generator
 
@@ -50,23 +52,29 @@ The main specification file is located at `2.2.1/ocpi-2.2.1.yaml`.
 # Install OpenAPI Generator
 npm install @openapitools/openapi-generator-cli -g
 
-# Generate TypeScript client
+# Generate TypeScript client (2.2.1)
 openapi-generator-cli generate \
   -i 2.2.1/ocpi-2.2.1.yaml \
   -g typescript-axios \
-  -o ./generated/typescript-client
+  -o ./generated/typescript-client-2.2.1
 
-# Generate Python client
+# Generate TypeScript client (2.3.0)
 openapi-generator-cli generate \
-  -i 2.2.1/ocpi-2.2.1.yaml \
-  -g python \
-  -o ./generated/python-client
+  -i 2.3.0/ocpi-2.3.0.yaml \
+  -g typescript-axios \
+  -o ./generated/typescript-client-2.3.0
 
-# Generate Go server
+# Generate Python client (2.3.0)
+openapi-generator-cli generate \
+  -i 2.3.0/ocpi-2.3.0.yaml \
+  -g python \
+  -o ./generated/python-client-2.3.0
+
+# Generate Go server (2.2.1)
 openapi-generator-cli generate \
   -i 2.2.1/ocpi-2.2.1.yaml \
   -g go-gin-server \
-  -o ./generated/go-server
+  -o ./generated/go-server-2.2.1
 ```
 
 #### Validate the Specification
@@ -75,7 +83,7 @@ openapi-generator-cli generate \
 
 ```bash
 # Validate a specific version (runs all CI checks)
-./scripts/validate.sh 2.2.1
+./scripts/validate.sh 2.3.0
 
 # Or validate all available versions
 ./scripts/validate.sh
@@ -84,25 +92,33 @@ openapi-generator-cli generate \
 **Manual validation** (if you prefer individual tools):
 
 ```bash
-# Validate OpenAPI structure
-swagger-cli validate 2.2.1/ocpi-2.2.1.yaml
+# Note: The main spec files reference modular components, so validation must be done on the bundled spec
 
-# Lint with Spectral (uses .spectral.yaml ruleset)
-spectral lint 2.2.1/ocpi-2.2.1.yaml
+# Bundle the specification (resolves all $ref references)
+swagger-cli bundle 2.2.1/ocpi-2.2.1.yaml -o /tmp/bundled-2.2.1.yaml
+swagger-cli bundle 2.3.0/ocpi-2.3.0.yaml -o /tmp/bundled-2.3.0.yaml
 
-# Check YAML syntax (optional)
+# Validate the bundled specification
+swagger-cli validate /tmp/bundled-2.2.1.yaml
+swagger-cli validate /tmp/bundled-2.3.0.yaml
+
+# Lint the bundled specification with Spectral (uses .spectral.yaml ruleset)
+spectral lint /tmp/bundled-2.2.1.yaml
+spectral lint /tmp/bundled-2.3.0.yaml
+
+# Check YAML syntax on individual files (optional)
 yamllint 2.2.1/ocpi-2.2.1.yaml
-
-# Bundle to test all $ref references resolve
-swagger-cli bundle 2.2.1/ocpi-2.2.1.yaml -o /tmp/bundled.yaml
-swagger-cli validate /tmp/bundled.yaml
+yamllint 2.3.0/ocpi-2.3.0.yaml
 ```
 
 #### View Documentation
 
 ```bash
-# Using swagger-ui
+# Using swagger-ui (2.2.1)
 npx swagger-ui-watcher 2.2.1/ocpi-2.2.1.yaml
+
+# Using swagger-ui (2.3.0)
+npx swagger-ui-watcher 2.3.0/ocpi-2.3.0.yaml
 
 # Or use online tools like Swagger Editor
 # https://editor.swagger.io/
@@ -125,7 +141,20 @@ ocpi-openapi-spec/
 │   └── components/              # Shared components
 │       ├── parameters.yaml      # Reusable query parameters
 │       └── responses.yaml       # Reusable response definitions
-├── 2.3.0/                       # Future version
+├── 2.3.0/
+│   ├── ocpi-2.3.0.yaml          # Main specification (references modules)
+│   ├── modules/                  # Module-specific schemas and paths
+│   │   ├── tokens.yaml          # Tokens module (Module 2)
+│   │   ├── locations.yaml       # Locations module (Module 4) - AFIR compliant
+│   │   ├── sessions.yaml         # Sessions module (Module 5)
+│   │   ├── cdrs.yaml            # CDRs module (Module 6)
+│   │   ├── tariffs.yaml         # Tariffs module (Module 7)
+│   │   ├── commands.yaml        # Commands module (Module 8)
+│   │   ├── hub.yaml             # Hub Client Info module (Module 9)
+│   │   └── booking.yaml         # Booking module (Module 10) - NEW in 2.3.0
+│   └── components/              # Shared components
+│       ├── parameters.yaml      # Reusable query parameters
+│       └── responses.yaml       # Reusable response definitions
 ├── common/
 │   └── definitions.yaml         # Shared type definitions across versions
 ├── .github/
@@ -141,15 +170,14 @@ ocpi-openapi-spec/
 ## Specification Features
 
 - **Modular Architecture**: Organized into reusable modules and components for maintainability
-- **Unified Entry Point**: Single main specification file (`ocpi-2.2.1.yaml`) that references modular components
-- **Complete Coverage**: All OCPI 2.2.1 modules implemented
-  - Tokens (Module 2)
-  - Locations (Module 4)
-  - Sessions (Module 5)
-  - CDRs (Module 6)
-  - Tariffs (Module 7)
-  - Commands (Module 8)
-  - Hub Client Info (Module 9)
+- **Unified Entry Point**: Single main specification file per version (`ocpi-2.2.1.yaml`, `ocpi-2.3.0.yaml`) that references modular components
+- **Complete Coverage**: All OCPI modules implemented
+  - **OCPI 2.2.1**: Tokens, Locations, Sessions, CDRs, Tariffs, Commands, Hub Client Info
+  - **OCPI 2.3.0**: All 2.2.1 modules plus:
+    - Booking module (Module 10) - NEW
+    - AFIR compliance features in Locations module
+    - Enhanced EVSE capabilities (PLUG_AND_CHARGE, PAYMENT_TERMINAL)
+    - Ad-hoc payment terminal support
 - **Strict Typing**: Proper data types, formats, and validation rules
 - **Role Documentation**: Clear indication of CPO/eMSP operations
 - **Push/Pull Support**: Models both pull (GET) and push (PUT) operations
@@ -172,7 +200,8 @@ Contributions are welcome! This project follows a "Clean Room" methodology to re
 
 **Example**:
 - ❌ Bad: "The address of the location where the EVSEs are installed. This field is mandatory and should contain the complete street address."
-- ✅ Good: "Street address. See OCPI Spec 2.2.1 Module 4."
+- ✅ Good (2.2.1): "Street address. See OCPI Spec 2.2.1 Module 4."
+- ✅ Good (2.3.0): "Booking identifier. See OCPI Spec 2.3.0 Module 10."
 
 ### Development Workflow
 
@@ -182,38 +211,26 @@ Contributions are welcome! This project follows a "Clean Room" methodology to re
    - Follow the sanitization rules above
    - Ensure all `$ref` references resolve correctly
    - Use proper OpenAPI 3.1.0 syntax
-   - Module-specific changes should be made in `2.2.1/modules/`
-   - Shared components go in `2.2.1/components/` or `common/`
+   - Module-specific changes should be made in version-specific directories (e.g., `2.2.1/modules/`, `2.3.0/modules/`)
+   - Shared components go in version-specific `components/` directories or `common/`
 4. **Validate**: Run validation before committing:
    
-   **Recommended**: Use the local validation script (runs all CI checks):
+   Use the local validation script (runs all CI checks):
    ```bash
    # Validate a specific version
-   ./scripts/validate.sh 2.2.1
+   ./scripts/validate.sh 2.3.0
    
    # Or validate all available versions
    ./scripts/validate.sh
    ```
    
    The validation script performs:
-   - ✅ YAML syntax checking (yamllint) - optional but recommended
-   - ✅ OpenAPI structure validation (swagger-cli)
-   - ✅ Spectral linting with ruleset (`.spectral.yaml`)
-   - ✅ Reference resolution testing (bundling)
-   - ✅ Bundled specification validation
+   - ✅ YAML syntax checking (yamllint) on individual files
+   - ✅ Bundling the specification (resolves all $ref references)
+   - ✅ OpenAPI structure validation on bundled spec (swagger-cli)
+   - ✅ Spectral linting on bundled spec (`.spectral.yaml` ruleset)
    
-   **Manual validation** (if you prefer individual tools):
-   ```bash
-   # Validate the main specification (validates all referenced modules)
-   swagger-cli validate 2.2.1/ocpi-2.2.1.yaml
-   
-   # Lint with Spectral (uses .spectral.yaml ruleset)
-   spectral lint 2.2.1/ocpi-2.2.1.yaml
-   
-   # Bundle to test all $ref references resolve
-   swagger-cli bundle 2.2.1/ocpi-2.2.1.yaml -o /tmp/bundled.yaml
-   swagger-cli validate /tmp/bundled.yaml
-   ```
+   For manual validation steps, see the [Validate the Specification](#validate-the-specification) section above.
 5. **Test**: Ensure the specification can be used for code generation
 6. **Commit**: Write clear commit messages
 7. **Push and PR**: Push to your fork and create a pull request
@@ -221,26 +238,26 @@ Contributions are welcome! This project follows a "Clean Room" methodology to re
 ### Validation Requirements
 
 All pull requests must:
-- ✅ Pass `swagger-cli validate` without errors
+- ✅ Pass `swagger-cli validate` on the bundled specification without errors
 - ✅ Have all `$ref` references resolve correctly (tested via bundling)
-- ✅ Pass Spectral linting checks (warnings are treated as errors)
-- ✅ Pass YAML syntax checks (yamllint) - required in CI, optional locally
+- ✅ Pass Spectral linting checks on the bundled spec (warnings are treated as errors)
+- ✅ Pass YAML syntax checks (yamllint) on individual files - required in CI, optional locally
 - ✅ Follow OpenAPI 3.1.0 specification standards
 - ✅ Maintain legal compliance (no copied text)
 
 **Quick Check**: Run `./scripts/validate.sh` before opening a PR to ensure all checks pass locally. This script runs the same validations as the CI workflow.
 
 **Note**: The CI workflow will fail if:
-- Any Spectral linting warnings are found (configured in `.spectral.yaml`)
-- YAML syntax errors are detected
-- OpenAPI validation fails
+- Any Spectral linting warnings are found on the bundled spec (configured in `.spectral.yaml`)
+- YAML syntax errors are detected in individual files
+- OpenAPI validation fails on the bundled specification
 - Reference resolution fails during bundling
 
 ### Reporting Issues
 
 When reporting issues:
 - Describe the problem clearly
-- Include the OCPI version (2.2.1)
+- Include the OCPI version (2.2.1 or 2.3.0)
 - Reference the relevant module if applicable
 - Link to the official OCPI spec section if relevant
 
@@ -256,4 +273,4 @@ This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) fo
 
 ## Status
 
-This is an active project. The OCPI 2.2.1 specification is being developed and validated. Check the [Issues](https://github.com/yourusername/ocpi-openapi-spec/issues) for current status and known limitations.
+This is an active project. Both OCPI 2.2.1 and 2.3.0 specifications are available and validated. Check the [Issues](https://github.com/yourusername/ocpi-openapi-spec/issues) for current status and known limitations.

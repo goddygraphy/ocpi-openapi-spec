@@ -1,0 +1,226 @@
+---
+paths:
+  /bookings:
+    get:
+      tags:
+        - Booking
+      summary: Get bookings
+      description: |
+        Retrieve a list of bookings. Used by eMSP to fetch bookings from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 10.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /bookings/{country_code}/{party_id}/{booking_id}:
+    get:
+      tags:
+        - Booking
+      summary: Get booking
+      description: |
+        Retrieve a specific booking by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 10.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Booking
+      summary: Push booking
+      description: |
+        Push a booking to the receiver. Used by CPO to push bookings to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 10.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    delete:
+      tags:
+        - Booking
+      summary: Delete booking
+      description: |
+        Delete a booking. Used by CPO to cancel bookings at eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 10.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '../modules/tokens.yaml#/components/schemas/CiString3'
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - token
+        - location_id
+        - evse_uid
+        - expiry_date
+        - status
+        - last_updated
+      properties:
+        id:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Booking identifier. See OCPI Spec 2.3.0 Module 10."
+        token:
+          $ref: '../modules/tokens.yaml#/components/schemas/Token'
+        location_id:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Location identifier. See OCPI Spec 2.3.0 Module 10."
+        evse_uid:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "EVSE UID. See OCPI Spec 2.3.0 Module 10."
+        expiry_date:
+          $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+          description: "Booking expiry date. See OCPI Spec 2.3.0 Module 10."
+        reservation_id:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Reservation identifier. See OCPI Spec 2.3.0 Module 10."
+        authorization_reference:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Authorization reference. See OCPI Spec 2.3.0 Module 10."
+        status:
+          type: string
+          enum:
+            - RESERVED
+            - RESERVATION_EXPIRED
+            - RESERVATION_CANCELLED
+          description: "Booking status. See OCPI Spec 2.3.0 Module 10."
+        last_updated:
+          $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+      description: "Booking object. See OCPI Spec 2.3.0 Module 10."

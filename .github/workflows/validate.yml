@@ -76,43 +76,6 @@ jobs:
         if: steps.check_version.outputs.exists == 'true'
         run: npm install -g @stoplight/spectral-cli
       
-      - name: Create symlink for common definitions (${{ matrix.version }})
-        if: steps.check_version.outputs.exists == 'true'
-        run: |
-          # Create symlink to allow individual file Spectral linting
-          mkdir -p ${{ matrix.version }}/common
-          ln -sf ../../common/definitions.yaml ${{ matrix.version }}/common/definitions.yaml
-          echo "✓ Symlink created for ${{ matrix.version }}/common/definitions.yaml"
-      
-      - name: Lint component files with Spectral (${{ matrix.version }})
-        if: steps.check_version.outputs.exists == 'true'
-        run: |
-          echo "Linting component files with Spectral for ${{ matrix.version }}..."
-          for file in ${{ matrix.version }}/components/*.yaml; do
-            echo "Linting $(basename $file)..."
-            spectral lint "$file"
-          done
-      
-      - name: Lint module files with Spectral (${{ matrix.version }})
-        if: steps.check_version.outputs.exists == 'true'
-        run: |
-          echo "Linting module files with Spectral for ${{ matrix.version }}..."
-          for file in ${{ matrix.version }}/modules/*.yaml; do
-            echo "Linting $(basename $file)..."
-            spectral lint "$file"
-          done
-      
-      - name: Validate main OpenAPI specification (${{ matrix.version }})
-        if: steps.check_version.outputs.exists == 'true'
-        run: |
-          # Try to validate main spec (may fail for modular specs, which is OK)
-          if swagger-cli validate ${{ matrix.version }}/ocpi-${{ matrix.version }}.yaml; then
-            echo "✓ Main OpenAPI specification is valid"
-          else
-            echo "⚠ Main OpenAPI specification validation failed (may be expected for modular specs)"
-            echo "Will validate bundled specification instead..."
-          fi
-      
       - name: Bundle specification (test all references) (${{ matrix.version }})
         if: steps.check_version.outputs.exists == 'true'
         run: |

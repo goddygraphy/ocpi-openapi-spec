@@ -170,62 +170,6 @@ validate_version() {
         echo ""
     fi
     
-    # Lint component files with Spectral (if symlink exists, $ref should resolve)
-    if [ -d "$version_dir/components" ] && [ -L "$version_dir/common/definitions.yaml" ]; then
-        print_info "Linting component files with Spectral..."
-        local component_spectral_errors=0
-        for file in "$version_dir/components"/*.yaml; do
-            if [ -f "$file" ]; then
-                if spectral lint "$file" >/dev/null 2>&1; then
-                    print_success "Spectral lint OK: $(basename $file)"
-                else
-                    print_error "Spectral lint issues in: $(basename $file)"
-                    spectral lint "$file" 2>&1 | head -10 || true
-                    component_spectral_errors=$((component_spectral_errors + 1))
-                fi
-            fi
-        done
-        if [ $component_spectral_errors -gt 0 ]; then
-            print_error "Found $component_spectral_errors component file(s) with Spectral issues"
-            return 1
-        fi
-        echo ""
-    fi
-    
-    # Lint module files with Spectral (if symlink exists, $ref should resolve)
-    if [ -d "$version_dir/modules" ] && [ -L "$version_dir/common/definitions.yaml" ]; then
-        print_info "Linting module files with Spectral..."
-        local module_spectral_errors=0
-        for file in "$version_dir/modules"/*.yaml; do
-            if [ -f "$file" ]; then
-                if spectral lint "$file" >/dev/null 2>&1; then
-                    print_success "Spectral lint OK: $(basename $file)"
-                else
-                    print_error "Spectral lint issues in: $(basename $file)"
-                    spectral lint "$file" 2>&1 | head -10 || true
-                    module_spectral_errors=$((module_spectral_errors + 1))
-                fi
-            fi
-        done
-        if [ $module_spectral_errors -gt 0 ]; then
-            print_error "Found $module_spectral_errors module file(s) with Spectral issues"
-            return 1
-        fi
-        echo ""
-    fi
-    
-    # Validate main OpenAPI specification (with symlink, $ref should resolve)
-    if [ -L "$version_dir/common/definitions.yaml" ]; then
-        print_info "Validating main OpenAPI specification: $spec_file"
-        if swagger-cli validate "$spec_file" >/dev/null 2>&1; then
-            print_success "Main OpenAPI specification is valid"
-        else
-            print_warning "Main OpenAPI specification validation failed (may be expected for modular specs)"
-            print_info "Will validate bundled specification instead..."
-        fi
-        echo ""
-    fi
-    
     # Bundle specification (test all $ref references and create complete spec)
     print_info "Bundling specification to resolve all \$ref references..."
     local bundled_file="/tmp/bundled-$version.yaml"

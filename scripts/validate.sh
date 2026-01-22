@@ -114,11 +114,15 @@ validate_version() {
         if [ ${#component_files[@]} -gt 0 ]; then
             for file in "${component_files[@]}"; do
                 if command_exists yamllint; then
-                    if yamllint "$file" 2>&1; then
+                    local yamllint_config=""
+                    if [ -f ".yamllint" ]; then
+                        yamllint_config="-c .yamllint"
+                    fi
+                    if yamllint $yamllint_config "$file" 2>&1; then
                         print_success "YAML syntax OK: $(basename $file)"
                     else
                         print_error "YAML syntax issues in: $(basename $file)"
-                        yamllint "$file" 2>&1 || true
+                        yamllint $yamllint_config "$file" 2>&1 || true
                         return 1
                     fi
                 else
@@ -140,11 +144,15 @@ validate_version() {
             if [ -f "$file" ]; then
                 module_count=$((module_count + 1))
                 if command_exists yamllint; then
-                    if yamllint "$file" 2>&1; then
+                    local yamllint_config=""
+                    if [ -f ".yamllint" ]; then
+                        yamllint_config="-c .yamllint"
+                    fi
+                    if yamllint $yamllint_config "$file" 2>&1; then
                         print_success "YAML syntax OK: $(basename $file)"
                     else
                         print_error "YAML syntax issues in: $(basename $file)"
-                        yamllint "$file" 2>&1 || true
+                        yamllint $yamllint_config "$file" 2>&1 || true
                         module_errors=$((module_errors + 1))
                     fi
                 else

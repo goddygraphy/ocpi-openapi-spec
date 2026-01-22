@@ -30,28 +30,28 @@ jobs:
         run: |
           if [ -d "${{ matrix.version }}" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version ${{ matrix.version }} directory found"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version ${{ matrix.version }} directory not found, skipping job..."
           fi
       
-      - name: Skip if version doesn't exist
-        if: steps.check_version.outputs.exists == 'false'
-        run: |
-          echo "Version ${{ matrix.version }} directory not found, skipping..."
-          exit 0
-      
       - name: Setup Node.js
+        if: steps.check_version.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       
       - name: Install swagger-cli
+        if: steps.check_version.outputs.exists == 'true'
         run: npm install -g swagger-cli
       
       - name: Install yamllint
+        if: steps.check_version.outputs.exists == 'true'
         run: pip install yamllint
       
       - name: Validate common definitions
+        if: steps.check_version.outputs.exists == 'true'
         run: |
           swagger-cli validate common/definitions.yaml || echo "Note: definitions.yaml is not a complete OpenAPI spec (expected)"
       
@@ -78,6 +78,7 @@ jobs:
           swagger-cli validate ${{ matrix.version }}/ocpi-${{ matrix.version }}.yaml
       
       - name: Install Spectral
+        if: steps.check_version.outputs.exists == 'true'
         run: npm install -g @stoplight/spectral-cli
       
       - name: Lint with Spectral (${{ matrix.version }})

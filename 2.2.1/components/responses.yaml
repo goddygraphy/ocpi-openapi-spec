@@ -1,3 +1,4 @@
+---
 components:
   responses:
     Success:
@@ -5,58 +6,64 @@ components:
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
-    
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+
     BadRequest:
       description: "Bad request. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2000
             status_message: "Invalid request"
             timestamp: "2024-01-15T10:30:00Z"
-    
+
     Unauthorized:
       description: "Unauthorized. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2001
             status_message: "Invalid token"
             timestamp: "2024-01-15T10:30:00Z"
-    
+
     NotFound:
       description: "Not found. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2002
             status_message: "Not found"
             timestamp: "2024-01-15T10:30:00Z"
-    
+
     Conflict:
       description: "Conflict. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2003
             status_message: "Conflict"
             timestamp: "2024-01-15T10:30:00Z"
-    
+
     InternalServerError:
       description: "Internal server error. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: >
+              '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2004
             status_message: "Internal server error"

@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "Validating component files for ${{ matrix.version }}..."
           # These are partial OpenAPI files, so we'll check YAML syntax
-          yamllint ${{ matrix.version }}/components/parameters.yaml ${{ matrix.version }}/components/responses.yaml
+          yamllint -c .yamllint ${{ matrix.version }}/components/parameters.yaml ${{ matrix.version }}/components/responses.yaml
       
       - name: Validate module files (${{ matrix.version }})
         if: steps.check_version.outputs.exists == 'true'
@@ -69,7 +69,7 @@ jobs:
           # These are partial OpenAPI files, so we'll check YAML syntax
           for file in ${{ matrix.version }}/modules/*.yaml; do
             echo "Checking $file..."
-            yamllint "$file"
+            yamllint -c .yamllint "$file"
           done
       
       - name: Validate OpenAPI ${{ matrix.version }} specification

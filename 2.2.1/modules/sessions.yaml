@@ -1,3 +1,4 @@
+---
 paths:
   /sessions:
     get:
@@ -5,7 +6,8 @@ paths:
         - Sessions
       summary: Get sessions
       description: |
-        Retrieve a list of charging sessions. Used by eMSP to fetch sessions from CPO.
+        Retrieve a list of charging sessions.
+        Used by eMSP to fetch sessions from CPO.
         Role: eMSP (sender), CPO (receiver)
         See OCPI Spec 2.2.1 Module 5.
       parameters:
@@ -29,7 +31,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     type: array
                     items:
@@ -39,8 +41,8 @@ paths:
         '401':
           $ref: '../components/responses.yaml#/components/responses/Unauthorized'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-  
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
   /sessions/{country_code}/{party_id}/{session_id}:
     get:
       tags:
@@ -82,7 +84,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     $ref: '#/components/schemas/Session'
         '400':
@@ -92,14 +94,15 @@ paths:
         '404':
           $ref: '../components/responses.yaml#/components/responses/NotFound'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-    
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
     put:
       tags:
         - Sessions
       summary: Push session
       description: |
-        Push a charging session to the receiver. Used by CPO to push sessions to eMSP.
+        Push a charging session to the receiver.
+        Used by CPO to push sessions to eMSP.
         Role: CPO (sender), eMSP (receiver)
         See OCPI Spec 2.2.1 Module 5.
       parameters:
@@ -130,7 +133,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../../common/definitions.yaml#/components/schemas/ResponseFormat'
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
         '400':
           $ref: '../components/responses.yaml#/components/responses/BadRequest'
         '401':
@@ -138,7 +141,7 @@ paths:
         '409':
           $ref: '../components/responses.yaml#/components/responses/Conflict'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
 
 components:
   schemas:
@@ -209,7 +212,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "Session object. See OCPI Spec 2.2.1 Module 5."
-    
+
     ChargingPeriod:
       type: object
       required:
@@ -226,7 +229,7 @@ components:
         tariff_id:
           $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
       description: "Charging period. See OCPI Spec 2.2.1 Module 5."
-    
+
     CdrDimension:
       type: object
       required:

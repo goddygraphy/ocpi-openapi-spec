@@ -1,3 +1,4 @@
+---
 paths:
   /cdrs:
     get:
@@ -5,7 +6,8 @@ paths:
         - CDRs
       summary: Get CDRs
       description: |
-        Retrieve a list of Charge Detail Records. Used by eMSP to fetch CDRs from CPO.
+        Retrieve a list of Charge Detail Records.
+        Used by eMSP to fetch CDRs from CPO.
         Role: eMSP (sender), CPO (receiver)
         See OCPI Spec 2.2.1 Module 6.
       parameters:
@@ -29,7 +31,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     type: array
                     items:
@@ -39,8 +41,8 @@ paths:
         '401':
           $ref: '../components/responses.yaml#/components/responses/Unauthorized'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-  
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
   /cdrs/{country_code}/{party_id}/{cdr_id}:
     get:
       tags:
@@ -82,7 +84,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     $ref: '#/components/schemas/CDR'
         '400':
@@ -92,14 +94,15 @@ paths:
         '404':
           $ref: '../components/responses.yaml#/components/responses/NotFound'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-    
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
     put:
       tags:
         - CDRs
       summary: Push CDR
       description: |
-        Push a Charge Detail Record to the receiver. Used by CPO to push CDRs to eMSP.
+        Push a Charge Detail Record to the receiver.
+        Used by CPO to push CDRs to eMSP.
         Role: CPO (sender), eMSP (receiver)
         See OCPI Spec 2.2.1 Module 6.
       parameters:
@@ -130,7 +133,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../../common/definitions.yaml#/components/schemas/ResponseFormat'
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
         '400':
           $ref: '../components/responses.yaml#/components/responses/BadRequest'
         '401':
@@ -138,7 +141,7 @@ paths:
         '409':
           $ref: '../components/responses.yaml#/components/responses/Conflict'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
 
 components:
   schemas:
@@ -234,7 +237,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "CDR object. See OCPI Spec 2.2.1 Module 6."
-    
+
     CdrLocation:
       type: object
       required:
@@ -327,7 +330,7 @@ components:
             - AC_3_PHASE
             - DC
       description: "CDR location. See OCPI Spec 2.2.1 Module 6."
-    
+
     CdrTariff:
       type: object
       required:
@@ -370,7 +373,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "CDR tariff. See OCPI Spec 2.2.1 Module 6."
-    
+
     CdrChargingPeriod:
       type: object
       required:

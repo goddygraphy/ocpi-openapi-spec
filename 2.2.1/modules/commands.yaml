@@ -1,3 +1,4 @@
+---
 paths:
   /commands/{command}:
     post:
@@ -45,7 +46,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     $ref: '#/components/schemas/CommandResponse'
         '400':
@@ -53,7 +54,7 @@ paths:
         '401':
           $ref: '../components/responses.yaml#/components/responses/Unauthorized'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
 
 components:
   schemas:
@@ -75,7 +76,7 @@ components:
         authorization_reference:
           $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
       description: "Start session command. See OCPI Spec 2.2.1 Module 8."
-    
+
     StopSessionCommand:
       type: object
       required:
@@ -84,7 +85,7 @@ components:
         session_id:
           $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
       description: "Stop session command. See OCPI Spec 2.2.1 Module 8."
-    
+
     ReserveNowCommand:
       type: object
       required:
@@ -109,7 +110,7 @@ components:
         authorization_reference:
           $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
       description: "Reserve now command. See OCPI Spec 2.2.1 Module 8."
-    
+
     UnlockConnectorCommand:
       type: object
       required:
@@ -124,7 +125,7 @@ components:
         connector_id:
           $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
       description: "Unlock connector command. See OCPI Spec 2.2.1 Module 8."
-    
+
     CommandResponse:
       type: object
       required:
@@ -151,7 +152,7 @@ components:
           type: object
           properties:
             language:
-              $ref: '../../common/definitions.yaml#/components/schemas/LanguageCode'
+              $ref: ../../common/definitions.yaml#/components/schemas/LanguageCode
             text:
               type: string
               maxLength: 512

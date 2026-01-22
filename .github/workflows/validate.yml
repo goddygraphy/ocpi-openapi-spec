@@ -1,0 +1,102 @@
+name: Validate OpenAPI Specification
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '[0-9]+\.[0-9]+\.[0-9]+/**'
+      - 'common/**'
+      - '.github/workflows/validate.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '[0-9]+\.[0-9]+\.[0-9]+/**'
+      - 'common/**'
+      - '.github/workflows/validate.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ['2.2.1', '2.3.0']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if version exists
+        id: check_version
+        run: |
+          if [ -d "${{ matrix.version }}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Skip if version doesn't exist
+        if: steps.check_version.outputs.exists == 'false'
+        run: |
+          echo "Version ${{ matrix.version }} directory not found, skipping..."
+          exit 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install swagger-cli
+        run: npm install -g swagger-cli
+      
+      - name: Install yamllint
+        run: pip install yamllint
+      
+      - name: Validate common definitions
+        run: |
+          swagger-cli validate common/definitions.yaml || echo "Note: definitions.yaml is not a complete OpenAPI spec (expected)"
+      
+      - name: Validate component files (${{ matrix.version }})
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          echo "Validating component files for ${{ matrix.version }}..."
+          # These are partial OpenAPI files, so we'll check YAML syntax
+          yamllint ${{ matrix.version }}/components/parameters.yaml ${{ matrix.version }}/components/responses.yaml
+      
+      - name: Validate module files (${{ matrix.version }})
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          echo "Validating module files for ${{ matrix.version }}..."
+          # These are partial OpenAPI files, so we'll check YAML syntax
+          for file in ${{ matrix.version }}/modules/*.yaml; do
+            echo "Checking $file..."
+            yamllint "$file"
+          done
+      
+      - name: Validate OpenAPI ${{ matrix.version }} specification
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          swagger-cli validate ${{ matrix.version }}/ocpi-${{ matrix.version }}.yaml
+      
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+      
+      - name: Lint with Spectral (${{ matrix.version }})
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          spectral lint ${{ matrix.version }}/ocpi-${{ matrix.version }}.yaml
+      
+      - name: Bundle specification (test all references) (${{ matrix.version }})
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          # Check that all $ref references resolve by bundling
+          swagger-cli bundle ${{ matrix.version }}/ocpi-${{ matrix.version }}.yaml -o /tmp/bundled-${{ matrix.version }}.yaml
+          echo "✓ All references resolved successfully"
+          echo "✓ Bundled specification created at /tmp/bundled-${{ matrix.version }}.yaml"
+          
+      - name: Validate bundled specification (${{ matrix.version }})
+        if: steps.check_version.outputs.exists == 'true'
+        run: |
+          # Validate the bundled spec to ensure it's still valid after bundling
+          swagger-cli validate /tmp/bundled-${{ matrix.version }}.yaml
+          echo "✓ Bundled specification is valid"

@@ -1,0 +1,28 @@
+# Official OCPI documentation files (must not be committed per legal compliance)
+*.pdf
+*.adoc
+*.asciidoc
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Generated files
+*.html
+*.json
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+docs/

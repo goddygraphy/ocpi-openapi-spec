@@ -1,0 +1,5 @@
+extends: spectral:oas
+rules:
+  # Disable unused-component warnings - components are used in module files
+  # that are referenced via $ref, so Spectral can't detect their usage
+  oas3-unused-component: off

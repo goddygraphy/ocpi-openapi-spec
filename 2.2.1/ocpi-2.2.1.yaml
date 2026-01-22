@@ -1,0 +1,1110 @@
+openapi: 3.1.0
+
+info:
+  title: OCPI 2.2.1 OpenAPI Specification
+  version: 2.2.1
+  description: |
+    Unofficial OpenAPI 3.1.0 specification for the Open Charge Point Interface (OCPI) protocol version 2.2.1.
+    
+    This specification provides machine-readable definitions for OCPI endpoints, enabling code generation and API validation.
+    
+    **Legal Notice**: This is an unofficial specification. All descriptive text has been rewritten to respect the CC BY-ND 4.0 license of the official documentation. For the official OCPI specification, visit https://evroaming.org/ocpi-downloads/
+    
+    This specification covers both CPO (Charge Point Operator) and eMSP (e-Mobility Service Provider) roles. Each endpoint is documented with its applicable role(s).
+  contact:
+    name: OCPI OpenAPI Community
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://example.com/ocpi/cpo/2.2.1
+    description: CPO (Charge Point Operator) server endpoint
+  - url: https://example.com/ocpi/emsp/2.2.1
+    description: eMSP (e-Mobility Service Provider) server endpoint
+
+tags:
+  - name: Tokens
+    description: Token management module. See OCPI Spec 2.2.1 Module 2.
+  - name: Locations
+    description: Location and EVSE information module. See OCPI Spec 2.2.1 Module 4.
+  - name: Sessions
+    description: Charging session management module. See OCPI Spec 2.2.1 Module 5.
+  - name: CDRs
+    description: Charge Detail Records module. See OCPI Spec 2.2.1 Module 6.
+  - name: Tariffs
+    description: Tariff and pricing information module. See OCPI Spec 2.2.1 Module 7.
+  - name: Commands
+    description: Remote commands module. See OCPI Spec 2.2.1 Module 8.
+  - name: Hub Client Info
+    description: Hub client information module. See OCPI Spec 2.2.1 Module 9.
+
+security:
+  - TokenAuth: []
+
+paths:
+  # Tokens Module (Module 2) - Implementation in modules/tokens.yaml
+  /tokens:
+    get:
+      operationId: getTokens
+      tags:
+        - Tokens
+      summary: Get tokens
+      description: |
+        Retrieve a list of tokens. Used by eMSP to fetch tokens from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 2.
+      parameters:
+        - $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: './components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: './components/parameters.yaml#/components/parameters/Offset'
+        - $ref: './components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    type: array
+                    items:
+                      $ref: './modules/tokens.yaml#/components/schemas/Token'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /tokens/{country_code}/{party_id}/{token_uid}:
+    get:
+      operationId: getToken
+      tags:
+        - Tokens
+      summary: Get token
+      description: |
+        Retrieve a specific token by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/tokens.yaml#/components/schemas/Token'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putToken
+      tags:
+        - Tokens
+      summary: Push token
+      description: |
+        Push a token to the receiver. Used by CPO to push tokens to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/tokens.yaml#/components/schemas/Token'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      operationId: patchToken
+      tags:
+        - Tokens
+      summary: Update token
+      description: |
+        Update a token. Used by CPO to update token information at eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/tokens.yaml#/components/schemas/Token'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Locations Module (Module 4)
+  /locations:
+    get:
+      operationId: getLocations
+      tags:
+        - Locations
+      summary: Get locations
+      description: |
+        Retrieve a list of locations. Used by eMSP to fetch locations from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 4.
+      parameters:
+        - $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: './components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: './components/parameters.yaml#/components/parameters/Offset'
+        - $ref: './components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    type: array
+                    items:
+                      $ref: './modules/locations.yaml#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /locations/{location_id}:
+    get:
+      operationId: getLocation
+      tags:
+        - Locations
+      summary: Get location
+      description: |
+        Retrieve a specific location by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 4.
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/locations.yaml#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putLocation
+      tags:
+        - Locations
+      summary: Push location
+      description: |
+        Push a location to the receiver. Used by CPO to push locations to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 4.
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/locations.yaml#/components/schemas/Location'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Sessions Module (Module 5)
+  /sessions:
+    get:
+      operationId: getSessions
+      tags:
+        - Sessions
+      summary: Get sessions
+      description: |
+        Retrieve a list of charging sessions. Used by eMSP to fetch sessions from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 5.
+      parameters:
+        - $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: './components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: './components/parameters.yaml#/components/parameters/Offset'
+        - $ref: './components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    type: array
+                    items:
+                      $ref: './modules/sessions.yaml#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /sessions/{country_code}/{party_id}/{session_id}:
+    get:
+      operationId: getSession
+      tags:
+        - Sessions
+      summary: Get session
+      description: |
+        Retrieve a specific charging session by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 5.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/sessions.yaml#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putSession
+      tags:
+        - Sessions
+      summary: Push session
+      description: |
+        Push a charging session to the receiver. Used by CPO to push sessions to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 5.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/sessions.yaml#/components/schemas/Session'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # CDRs Module (Module 6)
+  /cdrs:
+    get:
+      operationId: getCDRs
+      tags:
+        - CDRs
+      summary: Get CDRs
+      description: |
+        Retrieve a list of Charge Detail Records. Used by eMSP to fetch CDRs from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 6.
+      parameters:
+        - $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: './components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: './components/parameters.yaml#/components/parameters/Offset'
+        - $ref: './components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    type: array
+                    items:
+                      $ref: './modules/cdrs.yaml#/components/schemas/CDR'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /cdrs/{country_code}/{party_id}/{cdr_id}:
+    get:
+      operationId: getCDR
+      tags:
+        - CDRs
+      summary: Get CDR
+      description: |
+        Retrieve a specific Charge Detail Record by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 6.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: cdr_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/cdrs.yaml#/components/schemas/CDR'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putCDR
+      tags:
+        - CDRs
+      summary: Push CDR
+      description: |
+        Push a Charge Detail Record to the receiver. Used by CPO to push CDRs to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 6.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: cdr_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/cdrs.yaml#/components/schemas/CDR'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Tariffs Module (Module 7)
+  /tariffs:
+    get:
+      operationId: getTariffs
+      tags:
+        - Tariffs
+      summary: Get tariffs
+      description: |
+        Retrieve a list of tariffs. Used by eMSP to fetch tariffs from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 7.
+      parameters:
+        - $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: './components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: './components/parameters.yaml#/components/parameters/Offset'
+        - $ref: './components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    type: array
+                    items:
+                      $ref: './modules/tariffs.yaml#/components/schemas/Tariff'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /tariffs/{country_code}/{party_id}/{tariff_id}:
+    get:
+      operationId: getTariff
+      tags:
+        - Tariffs
+      summary: Get tariff
+      description: |
+        Retrieve a specific tariff by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 7.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: tariff_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/tariffs.yaml#/components/schemas/Tariff'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putTariff
+      tags:
+        - Tariffs
+      summary: Push tariff
+      description: |
+        Push a tariff to the receiver. Used by CPO to push tariffs to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 7.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+        - name: tariff_id
+          in: path
+          required: true
+          schema:
+            $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/tariffs.yaml#/components/schemas/Tariff'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Commands Module (Module 8)
+  /commands/{command}:
+    post:
+      operationId: postCommand
+      tags:
+        - Commands
+      summary: Send command
+      description: |
+        Send a remote command. Used by eMSP to send commands to CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 8.
+      parameters:
+        - name: command
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - START_SESSION
+              - STOP_SESSION
+              - RESERVE_NOW
+              - UNLOCK_CONNECTOR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: './modules/commands.yaml#/components/schemas/StartSessionCommand'
+                - $ref: './modules/commands.yaml#/components/schemas/StopSessionCommand'
+                - $ref: './modules/commands.yaml#/components/schemas/ReserveNowCommand'
+                - $ref: './modules/commands.yaml#/components/schemas/UnlockConnectorCommand'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/commands.yaml#/components/schemas/CommandResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Hub Client Info Module (Module 9)
+  /hubclientinfo:
+    get:
+      operationId: getHubClientInfo
+      tags:
+        - Hub Client Info
+      summary: Get hub client info
+      description: |
+        Retrieve hub client information.
+        Role: Hub (sender), CPO/eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 9.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: './modules/hub.yaml#/components/schemas/HubClientInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      operationId: putHubClientInfo
+      tags:
+        - Hub Client Info
+      summary: Push hub client info
+      description: |
+        Push hub client information to the receiver.
+        Role: Hub (sender), CPO/eMSP (receiver)
+        See OCPI Spec 2.2.1 Module 9.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './modules/hub.yaml#/components/schemas/HubClientInfo'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    TokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: |
+        OCPI Token authentication. Format: "Token {base64_encoded_token}"
+        See OCPI Spec 2.2.1 for authentication details.
+  
+  schemas:
+    # Import common definitions
+    CiString:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString'
+    CiString20:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString20'
+    CiString36:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString36'
+    CiString45:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString45'
+    CiString64:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString64'
+    CiString128:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString128'
+    CiString39:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString39'
+    CiString48:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString48'
+    CiString255:
+      $ref: '../common/definitions.yaml#/components/schemas/CiString255'
+    DateTime:
+      $ref: '../common/definitions.yaml#/components/schemas/DateTime'
+    URL:
+      $ref: '../common/definitions.yaml#/components/schemas/URL'
+    CountryCode:
+      $ref: '../common/definitions.yaml#/components/schemas/CountryCode'
+    LanguageCode:
+      $ref: '../common/definitions.yaml#/components/schemas/LanguageCode'
+    DisplayText:
+      $ref: '../common/definitions.yaml#/components/schemas/DisplayText'
+    BusinessDetails:
+      $ref: '../common/definitions.yaml#/components/schemas/BusinessDetails'
+    GeoLocation:
+      $ref: '../common/definitions.yaml#/components/schemas/GeoLocation'
+    Price:
+      $ref: '../common/definitions.yaml#/components/schemas/Price'
+    RegularHours:
+      $ref: '../common/definitions.yaml#/components/schemas/RegularHours'
+    ExceptionalPeriod:
+      $ref: '../common/definitions.yaml#/components/schemas/ExceptionalPeriod'
+    EnergyMix:
+      $ref: '../common/definitions.yaml#/components/schemas/EnergyMix'
+    ResponseFormat:
+      $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
+    
+    # OCPI-specific types
+    CiString3:
+      $ref: './modules/tokens.yaml#/components/schemas/CiString3'
+    
+    # Tokens Module Schemas
+    Token:
+      $ref: './modules/tokens.yaml#/components/schemas/Token'
+    
+    # Legacy schema definitions (replaced by module references above)
+    _LegacyToken:
+      type: object
+      required:
+        - uid
+        - type
+        - auth_id
+        - issuer
+        - valid
+        - whitelist
+        - last_updated
+      properties:
+        uid:
+          $ref: '#/components/schemas/CiString36'
+          description: "Token UID. See OCPI Spec 2.2.1 Module 2."
+        type:
+          type: string
+          enum:
+            - AD_HOC_USER
+            - APP_USER
+            - OTHER
+            - RFID
+          description: "Token type. See OCPI Spec 2.2.1 Module 2."
+        auth_id:
+          $ref: '#/components/schemas/CiString36'
+          description: "Authorization ID. See OCPI Spec 2.2.1 Module 2."
+        issuer:
+          type: string
+          maxLength: 64
+          description: "Token issuer. See OCPI Spec 2.2.1 Module 2."
+        valid:
+          type: boolean
+          description: "Token validity. See OCPI Spec 2.2.1 Module 2."
+        whitelist:
+          type: string
+          enum:
+            - ALWAYS
+            - ALLOWED
+            - ALLOWED_OFFLINE
+            - NEVER
+          description: "Whitelist type. See OCPI Spec 2.2.1 Module 2."
+        language:
+          $ref: '#/components/schemas/LanguageCode'
+        last_updated:
+          $ref: '#/components/schemas/DateTime'
+      description: "Token object. See OCPI Spec 2.2.1 Module 2."
+    
+    # Locations Module Schemas - See modules/locations.yaml for implementation
+    Location:
+      $ref: './modules/locations.yaml#/components/schemas/Location'
+    EVSE:
+      $ref: './modules/locations.yaml#/components/schemas/EVSE'
+    Connector:
+      $ref: './modules/locations.yaml#/components/schemas/Connector'
+    
+    # Sessions Module Schemas - See modules/sessions.yaml for implementation
+    Session:
+      $ref: './modules/sessions.yaml#/components/schemas/Session'
+    ChargingPeriod:
+      $ref: './modules/sessions.yaml#/components/schemas/ChargingPeriod'
+    CdrDimension:
+      $ref: './modules/sessions.yaml#/components/schemas/CdrDimension'
+    
+    # CDRs Module Schemas - See modules/cdrs.yaml for implementation
+    CDR:
+      $ref: './modules/cdrs.yaml#/components/schemas/CDR'
+    CdrLocation:
+      $ref: './modules/cdrs.yaml#/components/schemas/CdrLocation'
+    CdrTariff:
+      $ref: './modules/cdrs.yaml#/components/schemas/CdrTariff'
+    CdrChargingPeriod:
+      $ref: './modules/cdrs.yaml#/components/schemas/CdrChargingPeriod'
+    
+    # Tariffs Module Schemas - See modules/tariffs.yaml for implementation
+    Tariff:
+      $ref: './modules/tariffs.yaml#/components/schemas/Tariff'
+    TariffElement:
+      $ref: './modules/tariffs.yaml#/components/schemas/TariffElement'
+    PriceComponent:
+      $ref: './modules/tariffs.yaml#/components/schemas/PriceComponent'
+    TariffRestrictions:
+      $ref: './modules/tariffs.yaml#/components/schemas/TariffRestrictions'
+    
+    # Commands Module Schemas - See modules/commands.yaml for implementation
+    StartSessionCommand:
+      $ref: './modules/commands.yaml#/components/schemas/StartSessionCommand'
+    StopSessionCommand:
+      $ref: './modules/commands.yaml#/components/schemas/StopSessionCommand'
+    ReserveNowCommand:
+      $ref: './modules/commands.yaml#/components/schemas/ReserveNowCommand'
+    UnlockConnectorCommand:
+      $ref: './modules/commands.yaml#/components/schemas/UnlockConnectorCommand'
+    CommandResponse:
+      $ref: './modules/commands.yaml#/components/schemas/CommandResponse'
+    
+    # Hub Client Info Module Schemas - See modules/hub.yaml for implementation
+    HubClientInfo:
+      $ref: './modules/hub.yaml#/components/schemas/HubClientInfo'
+    
+    # All module schemas now reference module files (see above)
+  
+  parameters:
+    DateFrom:
+      $ref: './components/parameters.yaml#/components/parameters/DateFrom'
+    DateTo:
+      $ref: './components/parameters.yaml#/components/parameters/DateTo'
+    Offset:
+      $ref: './components/parameters.yaml#/components/parameters/Offset'
+    Limit:
+      $ref: './components/parameters.yaml#/components/parameters/Limit'
+  
+  responses:
+    Success:
+      $ref: './components/responses.yaml#/components/responses/Success'
+    BadRequest:
+      $ref: './components/responses.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: './components/responses.yaml#/components/responses/Unauthorized'
+    NotFound:
+      $ref: './components/responses.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: './components/responses.yaml#/components/responses/Conflict'
+    InternalServerError:
+      $ref: './components/responses.yaml#/components/responses/InternalServerError'

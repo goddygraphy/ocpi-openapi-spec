@@ -1,0 +1,159 @@
+paths:
+  /commands/{command}:
+    post:
+      tags:
+        - Commands
+      summary: Send command
+      description: |
+        Send a remote command. Used by eMSP to send commands to CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.2.1 Module 8.
+      parameters:
+        - name: command
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - START_SESSION
+              - STOP_SESSION
+              - RESERVE_NOW
+              - UNLOCK_CONNECTOR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/StartSessionCommand'
+                - $ref: '#/components/schemas/StopSessionCommand'
+                - $ref: '#/components/schemas/ReserveNowCommand'
+                - $ref: '#/components/schemas/UnlockConnectorCommand'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                  data:
+                    $ref: '#/components/schemas/CommandResponse'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    StartSessionCommand:
+      type: object
+      required:
+        - token
+        - location_id
+        - evse_uid
+      properties:
+        token:
+          $ref: '../modules/tokens.yaml#/components/schemas/Token'
+        location_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        evse_uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        authorization_reference:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "Start session command. See OCPI Spec 2.2.1 Module 8."
+    
+    StopSessionCommand:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "Stop session command. See OCPI Spec 2.2.1 Module 8."
+    
+    ReserveNowCommand:
+      type: object
+      required:
+        - token
+        - expiry_date
+        - reservation_id
+        - location_id
+        - evse_uid
+      properties:
+        token:
+          $ref: '../modules/tokens.yaml#/components/schemas/Token'
+        expiry_date:
+          $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+        reservation_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        location_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        evse_uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        authorization_reference:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "Reserve now command. See OCPI Spec 2.2.1 Module 8."
+    
+    UnlockConnectorCommand:
+      type: object
+      required:
+        - location_id
+        - evse_uid
+        - connector_id
+      properties:
+        location_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        evse_uid:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+        connector_id:
+          $ref: '../../common/definitions.yaml#/components/schemas/CiString36'
+      description: "Unlock connector command. See OCPI Spec 2.2.1 Module 8."
+    
+    CommandResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          enum:
+            - ACCEPTED
+            - CANCELED_RESERVATION
+            - EVSE_OCCUPIED
+            - EVSE_INOPERATIVE
+            - FAILED
+            - NOT_SUPPORTED
+            - REJECTED
+            - TIMEOUT
+            - UNKNOWN_COMMAND
+          description: "Command result. See OCPI Spec 2.2.1 Module 8."
+        timeout:
+          type: integer
+          minimum: 0
+          description: "Timeout in seconds. See OCPI Spec 2.2.1 Module 8."
+        message:
+          type: object
+          properties:
+            language:
+              $ref: '../../common/definitions.yaml#/components/schemas/LanguageCode'
+            text:
+              type: string
+              maxLength: 512
+          description: "Response message. See OCPI Spec 2.2.1 Module 8."
+      description: "Command response. See OCPI Spec 2.2.1 Module 8."

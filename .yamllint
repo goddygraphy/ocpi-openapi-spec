@@ -3,11 +3,16 @@ extends: default
 
 rules:
   line-length:
-    max: 80
+    max: 100 # Increased to accommodate inline $ref values (swagger-cli has issues with folded style)
     level: error
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: false
   trailing-spaces:
     level: error
   indentation:
     spaces: 2
     indent-sequences: true
     check-multi-line-strings: false
+  document-start:
+    present: true
+    level: error

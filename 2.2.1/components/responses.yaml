@@ -6,16 +6,14 @@ components:
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
 
     BadRequest:
       description: "Bad request. See OCPI Spec 2.2.1."
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2000
             status_message: "Invalid request"
@@ -26,8 +24,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2001
             status_message: "Invalid token"
@@ -38,8 +35,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2002
             status_message: "Not found"
@@ -50,8 +46,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2003
             status_message: "Conflict"
@@ -62,8 +57,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: >
-              '../common/definitions.yaml#/components/schemas/ResponseFormat'
+            $ref: '../common/definitions.yaml#/components/schemas/ResponseFormat'
           example:
             status_code: 2004
             status_message: "Internal server error"

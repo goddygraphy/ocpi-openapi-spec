@@ -1,3 +1,4 @@
+---
 paths:
   /tariffs:
     get:
@@ -29,7 +30,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     type: array
                     items:
@@ -39,8 +40,8 @@ paths:
         '401':
           $ref: '../components/responses.yaml#/components/responses/Unauthorized'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-  
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
   /tariffs/{country_code}/{party_id}/{tariff_id}:
     get:
       tags:
@@ -82,7 +83,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     $ref: '#/components/schemas/Tariff'
         '400':
@@ -92,8 +93,8 @@ paths:
         '404':
           $ref: '../components/responses.yaml#/components/responses/NotFound'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-    
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
     put:
       tags:
         - Tariffs
@@ -130,7 +131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../../common/definitions.yaml#/components/schemas/ResponseFormat'
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
         '400':
           $ref: '../components/responses.yaml#/components/responses/BadRequest'
         '401':
@@ -138,7 +139,7 @@ paths:
         '409':
           $ref: '../components/responses.yaml#/components/responses/Conflict'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
 
 components:
   schemas:
@@ -186,7 +187,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "Tariff object. See OCPI Spec 2.2.1 Module 7."
-    
+
     TariffElement:
       type: object
       required:
@@ -200,7 +201,7 @@ components:
         restrictions:
           $ref: '#/components/schemas/TariffRestrictions'
       description: "Tariff element. See OCPI Spec 2.2.1 Module 7."
-    
+
     PriceComponent:
       type: object
       required:
@@ -232,7 +233,7 @@ components:
           minimum: 1
           description: "Step size. See OCPI Spec 2.2.1 Module 7."
       description: "Price component. See OCPI Spec 2.2.1 Module 7."
-    
+
     TariffRestrictions:
       type: object
       properties:
@@ -296,7 +297,8 @@ components:
             type: integer
             minimum: 1
             maximum: 7
-          description: "Days of week (1=Monday, 7=Sunday). See OCPI Spec 2.2.1 Module 7."
+          description: |
+            Days of week (1=Monday, 7=Sunday). See OCPI Spec 2.2.1 Module 7.
         reservation:
           type: string
           enum:

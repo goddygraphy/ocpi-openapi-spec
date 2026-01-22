@@ -1,3 +1,4 @@
+---
 paths:
   /locations:
     get:
@@ -29,7 +30,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     type: array
                     items:
@@ -39,8 +40,8 @@ paths:
         '401':
           $ref: '../components/responses.yaml#/components/responses/Unauthorized'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-  
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
   /locations/{location_id}:
     get:
       tags:
@@ -72,7 +73,7 @@ paths:
                   status_message:
                     type: string
                   timestamp:
-                    $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
                   data:
                     $ref: '#/components/schemas/Location'
         '400':
@@ -82,8 +83,8 @@ paths:
         '404':
           $ref: '../components/responses.yaml#/components/responses/NotFound'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
-    
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
     put:
       tags:
         - Locations
@@ -110,7 +111,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../../common/definitions.yaml#/components/schemas/ResponseFormat'
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
         '400':
           $ref: '../components/responses.yaml#/components/responses/BadRequest'
         '401':
@@ -118,7 +119,7 @@ paths:
         '409':
           $ref: '../components/responses.yaml#/components/responses/Conflict'
         '500':
-          $ref: '../components/responses.yaml#/components/responses/InternalServerError'
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
 
 components:
   schemas:
@@ -202,11 +203,11 @@ components:
             $ref: '../../common/definitions.yaml#/components/schemas/DisplayText'
           description: "Directions. See OCPI Spec 2.2.1 Module 4."
         operator:
-          $ref: '../../common/definitions.yaml#/components/schemas/BusinessDetails'
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
         suboperator:
-          $ref: '../../common/definitions.yaml#/components/schemas/BusinessDetails'
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
         owner:
-          $ref: '../../common/definitions.yaml#/components/schemas/BusinessDetails'
+          $ref: ../../common/definitions.yaml#/components/schemas/BusinessDetails
         facilities:
           type: array
           items:
@@ -243,17 +244,17 @@ components:
             regular_hours:
               type: array
               items:
-                $ref: '../../common/definitions.yaml#/components/schemas/RegularHours'
+                $ref: ../../common/definitions.yaml#/components/schemas/RegularHours
             twenty_four_seven:
               type: boolean
             exceptional_openings:
               type: array
               items:
-                $ref: '../../common/definitions.yaml#/components/schemas/ExceptionalPeriod'
+                $ref: ../../common/definitions.yaml#/components/schemas/ExceptionalPeriod
             exceptional_closings:
               type: array
               items:
-                $ref: '../../common/definitions.yaml#/components/schemas/ExceptionalPeriod'
+                $ref: ../../common/definitions.yaml#/components/schemas/ExceptionalPeriod
           description: "Opening times. See OCPI Spec 2.2.1 Module 4."
         charging_when_closed:
           type: boolean
@@ -304,7 +305,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "Location object. See OCPI Spec 2.2.1 Module 4."
-    
+
     EVSE:
       type: object
       required:
@@ -447,7 +448,7 @@ components:
         last_updated:
           $ref: '../../common/definitions.yaml#/components/schemas/DateTime'
       description: "EVSE object. See OCPI Spec 2.2.1 Module 4."
-    
+
     Connector:
       type: object
       required:

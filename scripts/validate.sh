@@ -87,14 +87,10 @@ validate_version() {
         return 1
     fi
     
-    # Validate common definitions (if they exist)
+    # Check common definitions exist (partial spec, not validated directly)
     if [ -f "common/definitions.yaml" ]; then
-        print_info "Validating common definitions..."
-        if swagger-cli validate common/definitions.yaml 2>/dev/null; then
-            print_success "Common definitions validated"
-        else
-            print_warning "common/definitions.yaml is not a complete OpenAPI spec (expected)"
-        fi
+        print_info "Checking common definitions..."
+        print_warning "common/definitions.yaml is a partial spec (expected) - will be validated after bundling"
         echo ""
     fi
     
@@ -174,45 +170,94 @@ validate_version() {
         echo ""
     fi
     
-    # Validate main OpenAPI specification
-    print_info "Validating OpenAPI specification: $spec_file"
-    if swagger-cli validate "$spec_file"; then
-        print_success "OpenAPI specification is valid"
-    else
-        print_error "OpenAPI specification validation failed!"
-        return 1
+    # Lint component files with Spectral (if symlink exists, $ref should resolve)
+    if [ -d "$version_dir/components" ] && [ -L "$version_dir/common/definitions.yaml" ]; then
+        print_info "Linting component files with Spectral..."
+        local component_spectral_errors=0
+        for file in "$version_dir/components"/*.yaml; do
+            if [ -f "$file" ]; then
+                if spectral lint "$file" >/dev/null 2>&1; then
+                    print_success "Spectral lint OK: $(basename $file)"
+                else
+                    print_error "Spectral lint issues in: $(basename $file)"
+                    spectral lint "$file" 2>&1 | head -10 || true
+                    component_spectral_errors=$((component_spectral_errors + 1))
+                fi
+            fi
+        done
+        if [ $component_spectral_errors -gt 0 ]; then
+            print_error "Found $component_spectral_errors component file(s) with Spectral issues"
+            return 1
+        fi
+        echo ""
     fi
-    echo ""
     
-    # Lint with Spectral
-    print_info "Linting with Spectral..."
-    local spectral_output
-    if spectral_output=$(spectral lint "$spec_file" 2>&1); then
-        print_success "Spectral linting passed"
-    else
-        print_error "Spectral linting found issues:"
-        echo "$spectral_output"
-        return 1
+    # Lint module files with Spectral (if symlink exists, $ref should resolve)
+    if [ -d "$version_dir/modules" ] && [ -L "$version_dir/common/definitions.yaml" ]; then
+        print_info "Linting module files with Spectral..."
+        local module_spectral_errors=0
+        for file in "$version_dir/modules"/*.yaml; do
+            if [ -f "$file" ]; then
+                if spectral lint "$file" >/dev/null 2>&1; then
+                    print_success "Spectral lint OK: $(basename $file)"
+                else
+                    print_error "Spectral lint issues in: $(basename $file)"
+                    spectral lint "$file" 2>&1 | head -10 || true
+                    module_spectral_errors=$((module_spectral_errors + 1))
+                fi
+            fi
+        done
+        if [ $module_spectral_errors -gt 0 ]; then
+            print_error "Found $module_spectral_errors module file(s) with Spectral issues"
+            return 1
+        fi
+        echo ""
     fi
-    echo ""
     
-    # Bundle specification (test all $ref references)
-    print_info "Bundling specification to test \$ref resolution..."
+    # Validate main OpenAPI specification (with symlink, $ref should resolve)
+    if [ -L "$version_dir/common/definitions.yaml" ]; then
+        print_info "Validating main OpenAPI specification: $spec_file"
+        if swagger-cli validate "$spec_file" >/dev/null 2>&1; then
+            print_success "Main OpenAPI specification is valid"
+        else
+            print_warning "Main OpenAPI specification validation failed (may be expected for modular specs)"
+            print_info "Will validate bundled specification instead..."
+        fi
+        echo ""
+    fi
+    
+    # Bundle specification (test all $ref references and create complete spec)
+    print_info "Bundling specification to resolve all \$ref references..."
     local bundled_file="/tmp/bundled-$version.yaml"
     if swagger-cli bundle "$spec_file" -o "$bundled_file" >/dev/null 2>&1; then
         print_success "All \$ref references resolved successfully"
         print_info "Bundled specification created at: $bundled_file"
-        
-        # Validate bundled specification
-        print_info "Validating bundled specification..."
-        if swagger-cli validate "$bundled_file" >/dev/null 2>&1; then
-            print_success "Bundled specification is valid"
-        else
-            print_error "Bundled specification validation failed!"
-            return 1
-        fi
     else
         print_error "Failed to bundle specification - \$ref references may not resolve!"
+        swagger-cli bundle "$spec_file" -o "$bundled_file" 2>&1 | head -20 || true
+        return 1
+    fi
+    echo ""
+    
+    # Validate bundled specification (complete, resolved spec)
+    print_info "Validating bundled OpenAPI specification..."
+    if swagger-cli validate "$bundled_file" >/dev/null 2>&1; then
+        print_success "Bundled OpenAPI specification is valid"
+    else
+        print_error "Bundled OpenAPI specification validation failed!"
+        swagger-cli validate "$bundled_file" 2>&1 | head -20 || true
+        return 1
+    fi
+    echo ""
+    
+    # Lint bundled specification with Spectral (complete spec with all $ref resolved)
+    print_info "Linting bundled specification with Spectral..."
+    local spectral_output
+    if spectral_output=$(spectral lint "$bundled_file" 2>&1); then
+        print_success "Bundled Spectral linting passed"
+    else
+        print_error "Bundled Spectral linting found issues:"
+        echo "$spectral_output"
         return 1
     fi
     echo ""

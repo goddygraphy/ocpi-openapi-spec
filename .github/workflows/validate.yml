@@ -97,3 +97,37 @@ jobs:
           # Lint the complete, resolved bundled specification
           spectral lint /tmp/bundled-${{ matrix.version }}.yaml
           echo "✓ Bundled Spectral linting passed"
+      
+      - name: Set validation result
+        if: always()
+        run: |
+          if [ "${{ steps.check_version.outputs.exists }}" == "true" ]; then
+            echo "✅ Version ${{ matrix.version }} was validated successfully"
+          else
+            echo "⏭️  Version ${{ matrix.version }} skipped (directory does not exist)"
+          fi
+  
+  validate-all:
+    name: Validate All Versions
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    steps:
+      - name: Check validation results
+        run: |
+          echo "Checking validation results for all versions..."
+          echo ""
+          # Check if any matrix job failed
+          # With matrix strategies:
+          # - If ANY job fails → needs.validate.result = 'failure'
+          # - If ALL jobs succeed (including skipped) → needs.validate.result = 'success'
+          # Skipped jobs (all steps skipped) report as 'success', which is what we want
+          
+          if [ "${{ needs.validate.result }}" != "success" ]; then
+            echo "❌ One or more validation jobs failed"
+            echo "Please check the individual matrix job results above"
+            exit 1
+          fi
+          
+          echo "✅ All validations passed"
+          echo "✅ Skipped versions (non-existent directories) are allowed"

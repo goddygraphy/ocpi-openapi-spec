@@ -4,7 +4,7 @@ components:
     # Case Insensitive String types (OCPI-specific)
     CiString:
       type: string
-      description: "Case Insensitive String. See OCPI Spec 2.2.1 for details."
+      description: "Case Insensitive String. See OCPI Spec for details."
 
     CiString3:
       type: string
@@ -55,28 +55,28 @@ components:
     DateTime:
       type: string
       format: date-time
-      description: "Date and time. Compliant with RFC3339. See OCPI Spec 2.2.1."
+      description: "Date and time. Compliant with RFC3339. See OCPI Spec."
       example: "2024-01-15T10:30:00Z"
 
     # URL
     URL:
       type: string
       format: uri
-      description: "Uniform Resource Identifier. See OCPI Spec 2.2.1."
+      description: "Uniform Resource Identifier. See OCPI Spec."
       example: "https://example.com/ocpi"
 
     # Country Code (ISO 3166-1 alpha-2)
     CountryCode:
       type: string
       pattern: '^[A-Z]{2}$'
-      description: "ISO 3166-1 alpha-2 country code. See OCPI Spec 2.2.1."
+      description: "ISO 3166-1 alpha-2 country code. See OCPI Spec."
       example: "US"
 
     # Language Code (ISO 639-1)
     LanguageCode:
       type: string
       pattern: '^[a-z]{2}$'
-      description: "ISO 639-1 language code. See OCPI Spec 2.2.1."
+      description: "ISO 639-1 language code. See OCPI Spec."
       example: "en"
 
     # Display Text
@@ -91,8 +91,8 @@ components:
         text:
           type: string
           maxLength: 512
-          description: "Text to display. See OCPI Spec 2.2.1."
-      description: "Display text with language. See OCPI Spec 2.2.1."
+          description: "Text to display. See OCPI Spec."
+      description: "Display text with language. See OCPI Spec."
 
     # Business Details
     BusinessDetails:
@@ -101,7 +101,7 @@ components:
         name:
           type: string
           maxLength: 100
-          description: "Business name. See OCPI Spec 2.2.1."
+          description: "Business name. See OCPI Spec."
         website:
           $ref: '#/components/schemas/URL'
         logo:
@@ -134,8 +134,8 @@ components:
             height:
               type: integer
               minimum: 0
-          description: "Logo object. See OCPI Spec 2.2.1."
-      description: "Business details. See OCPI Spec 2.2.1."
+          description: "Logo object. See OCPI Spec."
+      description: "Business details. See OCPI Spec."
 
     # Additional Geo Location
     GeoLocation:
@@ -147,12 +147,12 @@ components:
         latitude:
           type: string
           pattern: '^-?[0-9]{1,2}\.[0-9]{1,6}$'
-          description: "Latitude. See OCPI Spec 2.2.1."
+          description: "Latitude. See OCPI Spec."
         longitude:
           type: string
           pattern: '^-?[0-9]{1,3}\.[0-9]{1,6}$'
-          description: "Longitude. See OCPI Spec 2.2.1."
-      description: "Geographic location. See OCPI Spec 2.2.1."
+          description: "Longitude. See OCPI Spec."
+      description: "Geographic location. See OCPI Spec."
 
     # Price
     Price:
@@ -163,12 +163,12 @@ components:
         excl_vat:
           type: number
           format: float
-          description: "Price excluding VAT. See OCPI Spec 2.2.1."
+          description: "Price excluding VAT. See OCPI Spec."
         incl_vat:
           type: number
           format: float
-          description: "Price including VAT. See OCPI Spec 2.2.1."
-      description: "Price object. See OCPI Spec 2.2.1."
+          description: "Price including VAT. See OCPI Spec."
+      description: "Price object. See OCPI Spec."
 
     # Regular Hours
     RegularHours:
@@ -182,16 +182,16 @@ components:
           type: integer
           minimum: 1
           maximum: 7
-          description: "Weekday (1=Monday, 7=Sunday). See OCPI Spec 2.2.1."
+          description: "Weekday (1=Monday, 7=Sunday). See OCPI Spec."
         period_begin:
           type: string
           pattern: '^[0-9]{2}:[0-9]{2}$'
-          description: "Begin time in HH:MM format. See OCPI Spec 2.2.1."
+          description: "Begin time in HH:MM format. See OCPI Spec."
         period_end:
           type: string
           pattern: '^[0-9]{2}:[0-9]{2}$'
-          description: "End time in HH:MM format. See OCPI Spec 2.2.1."
-      description: "Regular hours. See OCPI Spec 2.2.1."
+          description: "End time in HH:MM format. See OCPI Spec."
+      description: "Regular hours. See OCPI Spec."
 
     # Exceptional Period
     ExceptionalPeriod:
@@ -204,7 +204,7 @@ components:
           $ref: '#/components/schemas/DateTime'
         period_end:
           $ref: '#/components/schemas/DateTime'
-      description: "Exceptional period. See OCPI Spec 2.2.1."
+      description: "Exceptional period. See OCPI Spec."
 
     # Energy Mix
     EnergyMix:
@@ -212,7 +212,7 @@ components:
       properties:
         is_green_energy:
           type: boolean
-          description: "True if 100% from renewable sources. See OCPI Spec 2.2.1."
+          description: "True if 100% from renewable sources. See OCPI Spec."
         energy_sources:
           type: array
           items:
@@ -237,8 +237,8 @@ components:
                 format: float
                 minimum: 0
                 maximum: 100
-            description: "Energy source. See OCPI Spec 2.2.1."
-          description: "List of energy sources. See OCPI Spec 2.2.1."
+            description: "Energy source. See OCPI Spec."
+          description: "List of energy sources. See OCPI Spec."
         environ_impact:
           type: array
           items:
@@ -259,17 +259,17 @@ components:
               description:
                 type: string
                 maxLength: 64
-            description: "Environmental impact. See OCPI Spec 2.2.1."
-          description: "Environmental impact. See OCPI Spec 2.2.1."
+            description: "Environmental impact. See OCPI Spec."
+          description: "Environmental impact. See OCPI Spec."
         supplier_name:
           type: string
           maxLength: 64
-          description: "Energy supplier name. See OCPI Spec 2.2.1."
+          description: "Energy supplier name. See OCPI Spec."
         energy_product_name:
           type: string
           maxLength: 64
-          description: "Energy product name. See OCPI Spec 2.2.1."
-      description: "Energy mix. See OCPI Spec 2.2.1."
+          description: "Energy product name. See OCPI Spec."
+      description: "Energy mix. See OCPI Spec."
 
     # Response Format
     ResponseFormat:
@@ -277,13 +277,13 @@ components:
       properties:
         status_code:
           type: integer
-          description: "HTTP status code. See OCPI Spec 2.2.1."
+          description: "HTTP status code. See OCPI Spec."
         status_message:
           type: string
           maxLength: 255
-          description: "Status message. See OCPI Spec 2.2.1."
+          description: "Status message. See OCPI Spec."
         timestamp:
           $ref: '#/components/schemas/DateTime'
         data:
-          description: "Response data. See OCPI Spec 2.2.1."
-      description: "Standard OCPI response format. See OCPI Spec 2.2.1."
+          description: "Response data. See OCPI Spec."
+      description: "Standard OCPI response format. See OCPI Spec."

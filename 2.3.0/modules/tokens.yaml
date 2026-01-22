@@ -1,0 +1,241 @@
+---
+paths:
+  /tokens:
+    get:
+      tags:
+        - Tokens
+      summary: Get tokens
+      description: |
+        Retrieve a list of tokens. Used by eMSP to fetch tokens from CPO.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 2.
+      parameters:
+        - $ref: '../components/parameters.yaml#/components/parameters/DateFrom'
+        - $ref: '../components/parameters.yaml#/components/parameters/DateTo'
+        - $ref: '../components/parameters.yaml#/components/parameters/Offset'
+        - $ref: '../components/parameters.yaml#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Token'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+  /tokens/{country_code}/{party_id}/{token_uid}:
+    get:
+      tags:
+        - Tokens
+      summary: Get token
+      description: |
+        Retrieve a specific token by its identifier.
+        Role: eMSP (sender), CPO (receiver)
+        See OCPI Spec 2.3.0 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: integer
+                  status_message:
+                    type: string
+                  timestamp:
+                    $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+                  data:
+                    $ref: '#/components/schemas/Token'
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    put:
+      tags:
+        - Tokens
+      summary: Push token
+      description: |
+        Push a token to the receiver. Used by CPO to push tokens to eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../components/responses.yaml#/components/responses/Conflict'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+    patch:
+      tags:
+        - Tokens
+      summary: Update token
+      description: |
+        Update a token. Used by CPO to update token information at eMSP.
+        Role: CPO (sender), eMSP (receiver)
+        See OCPI Spec 2.3.0 Module 2.
+      parameters:
+        - name: country_code
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CountryCode
+        - name: party_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CiString3'
+        - name: token_uid
+          in: path
+          required: true
+          schema:
+            $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Token'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: ../../common/definitions.yaml#/components/schemas/ResponseFormat
+        '400':
+          $ref: '../components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../components/responses.yaml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../components/responses.yaml#/components/responses/NotFound'
+        '500':
+          $ref: ../components/responses.yaml#/components/responses/InternalServerError
+
+components:
+  schemas:
+    CiString3:
+      type: string
+      maxLength: 3
+      description: "Case Insensitive String. Maximum 3 characters."
+
+    Token:
+      type: object
+      required:
+        - uid
+        - type
+        - auth_id
+        - issuer
+        - valid
+        - whitelist
+        - last_updated
+      properties:
+        uid:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Token UID. See OCPI Spec 2.3.0 Module 2."
+        type:
+          type: string
+          enum:
+            - AD_HOC_USER
+            - APP_USER
+            - OTHER
+            - RFID
+          description: "Token type. See OCPI Spec 2.3.0 Module 2."
+        auth_id:
+          $ref: ../../common/definitions.yaml#/components/schemas/CiString36
+          description: "Authorization ID. See OCPI Spec 2.3.0 Module 2."
+        issuer:
+          type: string
+          maxLength: 64
+          description: "Token issuer. See OCPI Spec 2.3.0 Module 2."
+        valid:
+          type: boolean
+          description: "Token validity. See OCPI Spec 2.3.0 Module 2."
+        whitelist:
+          type: string
+          enum:
+            - ALWAYS
+            - ALLOWED
+            - ALLOWED_OFFLINE
+            - NEVER
+          description: "Whitelist type. See OCPI Spec 2.3.0 Module 2."
+        language:
+          $ref: ../../common/definitions.yaml#/components/schemas/LanguageCode
+        last_updated:
+          $ref: ../../common/definitions.yaml#/components/schemas/DateTime
+      description: "Token object. See OCPI Spec 2.3.0 Module 2."
